@@ -1,12 +1,13 @@
 package Tie::Array::PackedC;
 use constant ALLOC=>1024;
 use constant PACK=>'l!*';
+no warnings;
 use constant NULL=>pack PACK,"";
 use constant SIZE=>length NULL;
 use base qw(Tie::Array);
 use strict;
 use warnings;
-
+our $DEBUG;
 
 sub import {
 	if (@_>1 and $_[1]=~/[A-Z]/ and $_[0] eq __PACKAGE__) {
@@ -30,8 +31,8 @@ sub import {
 
 
 our @ISA=qw(Exporter);
-our $VERSION=0.01;
-our @EXPORT_OK=qw(packed_array packed_array_string);
+our $VERSION=0.02;
+our @EXPORT_OK=qw(packed_array packed_array_string $DEBUG);
 
 my %count;
 my %type;
@@ -51,6 +52,8 @@ sub packed_array_string {
 
 sub string     { return substr ${$_[0]},0,$count{$_[0]}*SIZE };
 
+sub reallen    { return $count{$_[0]}*SIZE };
+
 sub hex_dump {
 	my @words=map { sprintf "%02x " x SIZE,unpack "C*",pack PACK,$_; }  unpack PACK,${$_[0]};
 	for (my $ofs=0;$ofs<@words;$ofs+=4) {
@@ -68,10 +71,13 @@ sub DESTROY {
 sub _alloc {
 	my ($self,$size)=@_;
 	return if $size<$count{$self};
+	my $before=length($$self);
 	$count{$self}=$size;
 	my $alloc=int ($size * 1.2);
 	$alloc+=ALLOC - ($alloc % ALLOC);
 	$$self.=NULL x ( $alloc - length($$self)/SIZE );
+	my $after=length($$self);
+	warn "Resize. Reallen:".$self->reallen()." Len: $before -> $after\n" if $DEBUG;
 	$self;
 }
 
