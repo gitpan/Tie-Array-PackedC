@@ -1,0 +1,6 @@
+Revision history for Perl extension Tie::Array::PackedC.
+
+0.01  Wed Sep  3 01:25:35 2003
+	- original version; created by h2xs 1.21 with options
+		-X -n Tie::Array::PackedC
+
