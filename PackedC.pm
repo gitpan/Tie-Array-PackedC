@@ -31,7 +31,7 @@ sub import {
 
 
 our @ISA=qw(Exporter);
-our $VERSION=0.02;
+our $VERSION=0.03;
 our @EXPORT_OK=qw(packed_array packed_array_string $DEBUG);
 
 my %count;
@@ -51,6 +51,12 @@ sub packed_array_string {
 
 
 sub string     { return substr ${$_[0]},0,$count{$_[0]}*SIZE };
+
+sub trim       {
+                 #printf STDERR "%d %d %d\n",$count{$_[0]},$count{$_[0]}*SIZE,length(${$_[0]});
+                 substr ${$_[0]}, $count{$_[0]}*SIZE, length(${$_[0]}) - ($count{$_[0]}*SIZE), "";
+                 return $_[0];
+               }
 
 sub reallen    { return $count{$_[0]}*SIZE };
 
@@ -108,7 +114,8 @@ sub FETCH {
 
 sub STORE {
 	my ($s,$o,$v)=@_;
-	$s->_alloc($o+1) if length($$s)<$o*SIZE;
+	$s->_alloc($o+1) if length($$s)<($o+1)*SIZE;
+	$count{$s}=$o+1 if $count{$s}<=$o;
 	substr($$s,$o * SIZE,SIZE)=pack(PACK,$v);
 	$v
 }
@@ -320,6 +327,11 @@ string passed into the array, which may be longer.
 
 Prints to STDOUT a hex dump of the underlying string.
 
+=item trim()
+
+Frees up any preallocated but unused memory. This is useful if you know
+you will not be performing any more store operations on the string.
+
 =back
 
 =head2 PACKAGE CONSTANTS
@@ -379,7 +391,7 @@ initialize the array.
 
 =head1 AUTHOR
 
-demerphq, E<lt>demerphq@hotmail.comE<gt>
+demerphq, (yves at cpan dot org).
 
 =head1 SEE ALSO
 

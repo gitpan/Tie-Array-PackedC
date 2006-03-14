@@ -2,7 +2,7 @@ use strict;
 use warnings;
 
 our @DEBUG;
-use Test::More tests => 23;
+use Test::More tests => 28;
 
 BEGIN {
 
@@ -40,8 +40,19 @@ ok( exists( $float->[0] ), '$float->[0] exists' );
 ok( !exists( $float->[20] ), '$float->[1] not exists' );
 is( delete( $float->[1] ), 2, 'Delete returns correctly' );
 is( $float->[1], 0, 'Deleted record is 0' );
+
 my ( $s, @a ) = pack "l!*", 1 .. 5;
 tie @a, 'Tie::Array::PackedC', $s, reverse 1 .. 4;
 is( "@a", "4 3 2 1 5", "Doc check 1 - Initialization overlap" );
 $a[5] = 10;
+is ($a[5],10, "Store into \$array[\@array] works");
 isnt( $s, tied(@a)->string, "Doc check 2 - Real versus method string access" );
+
+$a[7] = 11;
+is ($a[7],11, "Store past end of \@array works ");
+is ($a[6],0, "Store past end of \@array works (intermediate goes to 0) ");
+my $l1=length(${tied(@a)});
+tied(@a)->trim;
+my $l2=length(${tied(@a)});
+isnt($l1,$l2,"Trim trimmed");
+is( "@a", "4 3 2 1 5 10 0 11", "Trim didn't corrupt" );
